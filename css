@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leitor de QR Code</title>
+</head>
+<body>
+    <h1>Leitor de QR Code</h1>
+    <video id="camera" style="width: 100%; max-width: 400px;"></video>
+    <canvas id="canvas" style="display: none;"></canvas>
+
+    <script src="https://cdn.rawgit.com/cozmo/jsQR/master/dist/jsQR.js"></script>
+    <script>
+        const video = document.getElementById('camera');
+        const canvasElement = document.getElementById('canvas');
+        const canvas = canvasElement.getContext('2d');
+
+        navigator.mediaDevices
+            .getUserMedia({ video: { facingMode: 'environment' } })
+            .then(function (stream) {
+                video.srcObject = stream;
+                video.setAttribute('playsinline', true); // Iniciar vídeo no iOS
+
+                video.play().then(function () {
+                    requestAnimationFrame(tick);
+                });
+            })
+            .catch(function (error) {
+                console.error('Error accessing the camera: ', error);
+            });
+
+        function tick() {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvasElement.hidden = false;
+                canvasElement.height = video.videoHeight;
+                canvasElement.width = video.videoWidth;
+                canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+                const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
+                if (code) {
+                    alert('QR Code lido: ' + code.data);
+                }
+            }
+
+            requestAnimationFrame(tick);
+        }
+    </script>
+</body>
+</html>
